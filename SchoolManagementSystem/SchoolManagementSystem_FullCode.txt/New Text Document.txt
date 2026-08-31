@@ -1,0 +1,150 @@
+ ========== srcmainMain.java ==========
+package main;
+import java.util.;
+import java.time.LocalDate;
+import school.model.;
+import school.service.;
+import school.exception.InvalidScoreException;
+
+public class Main {
+    public static void main(String[] args) {
+        Scanner sc = new Scanner(System.in);
+        AuthService auth = new AuthService();
+        SchoolService service = new SchoolService();
+        DB.createTable();  for SQLite
+        new BackupThread(service).start();  Part 27
+
+        System.out.print(Login - Username ); String u = sc.nextLine();
+        System.out.print(Password ); String p = sc.nextLine();
+        if(!auth.login(u,p)) { System.out.println(Login Failed); return; }
+
+        int choice;
+        do {
+            System.out.println(n=== SCHOOL MENU ===);
+            System.out.println(1.Register 2.View All 3.Find 4.Average 5.Sort 6.Save File 7.Save DB 8.Exit);
+            choice = sc.nextInt(); sc.nextLine();
+
+            if (choice == 1) {
+                System.out.print(ID ); int id = sc.nextInt(); sc.nextLine();
+                System.out.print(Name ); String name = sc.nextLine();
+                System.out.print(Fee ); double fee = sc.nextDouble();
+                Student s = new Student(id, name, 18, Gender.MALE, fee, StudentLevel.ND1);
+                s.setDob(LocalDate.of(2005,1,1));
+                try { s.setScore(75); } catch(InvalidScoreException e) { System.out.println(e.getMessage()); }
+                service.registerStudent(s);
+            }
+            else if (choice == 2) service.displayAllStudents();
+            else if (choice == 3) { System.out.print(ID ); int id=sc.nextInt(); Student s=service.findStudent(id); if(s!=null) s.printDetails(); else System.out.println(Not Found); }
+            else if (choice == 4) System.out.println(Average Score  + service.calculateAverage());
+            else if (choice == 5) service.sortStudentsByName();
+            else if (choice == 6) service.saveData();
+            else if (choice == 7) service.saveAllToDB();
+            else if (choice == 8) service.saveData();
+        } while(choice != 8);
+    }
+}
+
+ ========== srcschoolmodelPerson.java ==========
+package school.model;
+import java.io.Serializable;
+public abstract class Person implements Serializable {
+    private static final long serialVersionUID = 1L;
+    protected int id; protected String name; protected int age; protected Gender gender;
+    public Person(int id, String name, int age, Gender gender) { this.id=id; this.name=name; this.age=age; this.gender=gender; }
+    public abstract void printDetails();
+    public int getId() { return id; } public String getName() { return name; } public int getAge() { return age; }
+}
+
+ ========== srcschoolmodelStudent.java ==========
+package school.model;
+import java.io.Serializable; import java.time.LocalDate; import java.time.Period;
+import school.interfaces.Payable; import school.exception.InvalidScoreException;
+public class Student extends Person implements Payable, ComparableStudent, Serializable {
+    private static final long serialVersionUID = 1L;
+    private double fee; private double score; private StudentLevel level; private LocalDate dob;
+    public Student(int id, String name, int age, Gender gender, double fee, StudentLevel level) { super(id,name,age,gender); this.fee=fee; this.level=level; }
+    public double getFee() { return fee; } public void setDob(LocalDate dob) { this.dob = dob; }
+    public int getAge() { return Period.between(dob, LocalDate.now()).getYears(); } public double getScore() { return score; }
+    @Override public void printDetails() { System.out.println(ID +id+, Name +name+, Level +level+, Score +score); }
+    @Override public void pay(double amount) { System.out.println(name +  paid  + amount); }
+    @Override public void setScore(double score) throws InvalidScoreException { if(score0score100) throw new InvalidScoreException(Score must be 0-100); this.score=score; }
+    @Override public int compareTo(Student other) { return this.name.compareTo(other.name); }
+}
+
+ ========== srcschoolmodelGender.java ==========
+package school.model; public enum Gender { MALE, FEMALE }
+
+ ========== srcschoolmodelStudentLevel.java ==========
+package school.model; public enum StudentLevel { ND1, ND2, HND1, HND2 }
+
+ ========== srcschoolmodelUserRole.java ==========
+package school.model; public enum UserRole { ADMIN, TEACHER, STUDENT }
+
+ ========== srcschoolmodelUser.java ==========
+package school.model; public class User { private String username; private String password; private UserRole role;
+    public User(String u, String p, UserRole r){username=u; password=p; role=r;} public UserRole getRole(){return role;}
+}
+
+ ========== srcschoolinterfacesPayable.java ==========
+package school.interfaces; public interface Payable { void pay(double amount); }
+
+ ========== srcschoolinterfacesRepository.java ==========
+package school.interfaces; import java.util.List;
+public interface RepositoryT { void save(int id, T t); T findById(int id); ListT findAll(); void delete(int id); }
+
+ ========== srcschoolexceptionInvalidScoreException.java ==========
+package school.exception; public class InvalidScoreException extends Exception { public InvalidScoreException(String message){super(message);} }
+
+ ========== srcschoolserviceRepositoryImpl.java ==========
+package school.service; import school.interfaces.Repository; import java.util.;
+public class RepositoryImplT implements RepositoryT { private MapInteger, T data = new HashMap();
+    public void save(int id, T t){data.put(id,t);} public T findById(int id){return data.get(id);}
+    public ListT findAll(){return new ArrayList(data.values());} public void delete(int id){data.remove(id);}
+}
+
+ ========== srcschoolserviceSchoolService.java ==========
+package school.service; import school.model.; import java.util.; import java.util.logging.Logger;
+public class SchoolService {
+    private static final Logger logger = Logger.getLogger(SchoolService.class.getName());
+    private RepositoryImplStudent studentRepo = new RepositoryImpl();
+    public void registerStudent(Student s){studentRepo.save(s.getId(),s); logger.info(New Student +s.getName());}
+    public Student findStudent(int id){return studentRepo.findById(id);}
+    public void displayAllStudents(){studentRepo.findAll().forEach(StudentprintDetails);}
+    public double calculateAverage(){return studentRepo.findAll().stream().mapToDouble(StudentgetScore).average().orElse(0);}
+    public void sortStudentsByName(){studentRepo.findAll().stream().sorted().forEach(StudentprintDetails);}
+    public void saveData(){FileDataManager.saveStudents(new ArrayList(studentRepo.findAll())); System.out.println(Data saved to students.dat);}
+    public void saveAllToDB(){studentRepo.findAll().forEach(DBsaveStudentToDB); System.out.println(Data saved to DB);}
+    public ListStudent getPassedStudents(){return studentRepo.findAll().stream().filter(s-s.getScore()=50).toList();}
+}
+
+ ========== srcschoolserviceFileDataManager.java ==========
+package school.service; import school.model.Student; import java.io.; import java.util.List;
+public class FileDataManager {
+    public static void saveStudents(ListStudent students){try(ObjectOutputStream oos=new ObjectOutputStream(new FileOutputStream(students.dat))){oos.writeObject(students);}catch(Exception e){e.printStackTrace();}}
+    public static ListStudent loadStudents(){try(ObjectInputStream ois=new ObjectInputStream(new FileInputStream(students.dat))){return (ListStudent)ois.readObject();}catch(Exception e){return new ArrayList();}}
+}
+
+ ========== srcschoolserviceDB.java ==========
+package school.service; import java.sql.; import school.model.Student;
+public class DB {
+    private static final String URL = jdbcsqliteschool.db;
+    public static Connection getConnection() throws SQLException {return DriverManager.getConnection(URL);}
+    public static void createTable(){String sql=CREATE TABLE IF NOT EXISTS students(id INT PRIMARY KEY, name TEXT, age INT, fee REAL); try(Connection con=getConnection(); Statement stmt=con.createStatement()){stmt.execute(sql);}catch(SQLException e){e.printStackTrace();}}
+    public static void saveStudentToDB(Student s){String sql=INSERT OR REPLACE INTO students(id, name, age, fee) VALUES(,,,); try(Connection con=getConnection(); PreparedStatement ps=con.prepareStatement(sql)){ps.setInt(1,s.getId());ps.setString(2,s.getName());ps.setInt(3,s.getAge());ps.setDouble(4,s.getFee());ps.executeUpdate();}catch(SQLException e){e.printStackTrace();}}
+}
+
+ ========== srcschoolserviceAuthService.java ==========
+package school.service; import school.model.;
+public class AuthService { private User loggedInUser;
+    public boolean login(String username, String password){
+        if(username.equals(admin) && password.equals(1234)){loggedInUser=new User(admin,1234,UserRole.ADMIN); return true;}
+        return false;
+    }
+    public UserRole getRole(){return loggedInUser.getRole();}
+}
+
+ ========== srcschoolserviceBackupThread.java ==========
+package school.service;
+public class BackupThread extends Thread { private SchoolService service; public BackupThread(SchoolService service){this.service=service;}
+    @Override public void run(){while(true){try{Thread.sleep(60000); service.saveData(); System.out.println(Auto Backup Done...);}catch(Exception e){}}}
+}
