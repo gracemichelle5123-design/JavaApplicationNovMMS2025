@@ -1,15 +1,31 @@
 package school.model;
+import java.io.Serializable;
 
-public class Enrollment {
+public class Enrollment implements Serializable {
+    private static final long serialVersionUID = 1L;
     private Student student;
-    private String course;
+    private String courseCode;
     private double score;
 
-    public Enrollment(Student student, String course, double score) {
+    public Enrollment(Student student, String courseCode, double score) {
         this.student = student;
-        this.course = course;
+        this.courseCode = courseCode;
         this.score = score;
-        student.setScore(score); 
-        System.out.println(student.getName() + " enrolled in " + course + " with score: " + student.getScore());
+    }
+
+    public Student getStudent() { 
+        return student; 
+    }
+    
+    public String getCourse() { 
+        return courseCode; 
+    }
+    
+    public double getScore() { 
+        return score; 
+    }
+    
+    public void setScore(double score) { 
+        this.score = score; 
     }
 }

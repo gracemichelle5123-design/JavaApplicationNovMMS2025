@@ -1,2 +1,5 @@
 package school.interfaces;
-public interface Payable { void pay(double amount); }
+
+public interface Payable {
+    void pay(double amount);
+}

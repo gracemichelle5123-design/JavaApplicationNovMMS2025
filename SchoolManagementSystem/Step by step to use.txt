@@ -1,0 +1,103 @@
+Got you bro ✅ 
+
+This is now 100% CMD version. No GUI, No Database.
+
+### *STEP-BY-STEP: HOW TO RUN & USE THE SCHOOL SYSTEM*
+
+#### *STEP 1: SETUP FILES*
+1. Create folder: `SchoolManagementSystem`
+2. Inside it create: `src\school\model\` and `src\school\main\` and `bin\`
+3. Copy all 8 files I sent into them:
+SchoolManagementSystem/
+├── bin/
+└── src/
+    └── school/
+        ├── model/
+        │   ├── Gender.java
+        │   ├── StudentLevel.java  
+        │   ├── Course.java
+        │   ├── Department.java
+        │   ├── Person.java
+        │   ├── Student.java
+        │   └── Teacher.java
+        └── main/
+            └── Main.java
+#### *STEP 2: COMPILE*
+Open CMD in `SchoolManagementSystem` folder and run:
+javac -d bin src\school\model\*.java src\school\main\Main.java
+If no error shows, you’re good.
+
+#### *STEP 3: RUN*
+java -cp bin school.main.Main
+---
+
+### *STEP 4: HOW TO USE THE MENU*
+
+When you run it you’ll see:
+======== SECONDARY SCHOOL MANAGEMENT SYSTEM ========
+1. Students 2. Teachers 3. Departments 4. Courses
+5. Enroll Student 6. Record Grade 7. View Student Report
+8. School Reports 9. Exit
+#### *1. ADD STUDENT WITH GRADES*
+`Enter choice: 1`  
+`1. View All 2. Add` → Press `2`
+First: Michelle
+Last: Fredick
+Dept ID: 3   <- 3 = Commercial
+Level: 2     <- 2 = JSS2
+Then it will ask you for scores:
+Enter score for Mathematics 0-100 or -1 to skip: 75
+Enter score for English Language 0-100 or -1 to skip: 68
+Enter score for Biology 0-100 or -1 to skip: 80
+Enter score for Chemistry 0-100 or -1 to skip: -1
+Enter score for Economics 0-100 or -1 to skip: 70
+Done! Current GPA: 2.93
+Done! GPA won’t be 0.00 anymore
+
+#### *2. ADD TEACHER*
+`Enter choice: 2`  
+`1. View All 2. Add` → Press `2`  
+`First: Mrs Last: Bello Subject: Biology`
+
+#### *3. VIEW DEPARTMENTS*
+`Enter choice: 3`  
+Shows: `1. Science | Students: 1 | Avg GPA: 3.10`
+
+#### *4. VIEW COURSES*
+`Enter choice: 4`  
+Shows all 5 courses with IDs: `3000. Mathematics [3 Units]`
+
+#### *5. RECORD GRADE LATER*
+`Enter choice: 6`
+Enter Student ID: 1002  <- Use the ID from "View All Students"
+Enter Course ID: 3003   <- Use the ID from "View Courses"  
+Enter Score 0-100: 85
+Grade Recorded! New GPA: 3.10
+#### *6. VIEW STUDENT REPORT CARD*
+`Enter choice: 7`
+Enter Student ID: 1002
+--- REPORT CARD FOR: Michelle Fredick ---
+COURSE         SCORE   GRADE
+Mathematics    75.0    A
+English        68.0    B
+Biology        80.0    A
+Economics      70.0    A
+GPA: 2.93
+#### *7. SCHOOL REPORTS*
+`Enter choice: 8`  
+Shows: Total Students, School Average GPA, Top Student, Department Performance
+
+#### *8. EXIT*
+`Enter choice: 9`
+
+---
+
+### *IMPORTANT NOTES*
+1.  *Student IDs*: Start from 1000. Check with "View All" before adding grade
+2.  *Course IDs*: Start from 3000. Check with "View Courses" before adding grade
+3.  *GPA Formula*: `Average Score / 25`. So 100 = 4.00 GPA. 75 = 3.00 GPA
+4.  *Data resets* when you close the program. It’s not saved to file yet
+
+Run it now and try adding 1 student with scores. 
+
+Which part do you want me to add next: `Save to file` or `Delete Student` or `Search Student`?

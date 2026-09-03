@@ -1,8 +1,10 @@
 package school.interfaces;
-import java.util.List;
-public interface Repository<T> {
-    void save(int id, T t);
-    T findById(int id);
-    List<T> findAll();
-    void delete(int id);
+
+import java.util.Collection;
+
+public interface Repository<K, V> {
+    void add(K key, V value);
+    V get(K key);
+    void remove(K key);
+    Collection<V> getAllValues();
 }

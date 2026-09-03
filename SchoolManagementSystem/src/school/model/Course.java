@@ -1,20 +1,7 @@
 package school.model;
-import java.io.Serializable;
-
-public class Course implements Serializable {
-    private static final long serialVersionUID = 1L;
-    private String courseCode;
-    private String courseName;
-    private int units;
-    private Teacher teacher; 
-
-    public Course(String courseCode, String courseName, int units) {
-        this.courseCode = courseCode;
-        this.courseName = courseName;
-        this.units = units;
-    }
-    public void assignTeacher(Teacher teacher) { this.teacher = teacher; }
-    public String getCourseCode() { return courseCode; }
-    public String getCourseName() { return courseName; }
-    public Teacher getTeacher() { return teacher; }
+public class Course {
+    private int id; private String name; private int unit;
+    public Course(int id, String name, int unit) { this.id = id; this.name = name; this.unit = unit; }
+    public int getId() { return id; } public String getName() { return name; } public int getUnit() { return unit; }
+    @Override public String toString() { return id + ". " + name + " [" + unit + " Units]"; }
 }

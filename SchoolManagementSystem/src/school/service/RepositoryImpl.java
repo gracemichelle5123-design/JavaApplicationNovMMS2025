@@ -1,10 +1,30 @@
 package school.service;
+
 import school.interfaces.Repository;
-import java.util.*;
-public class RepositoryImpl<T> implements Repository<T> {
-    private Map<Integer, T> data = new HashMap<>();
-    public void save(int id, T t){data.put(id,t);}
-    public T findById(int id){return data.get(id);}
-    public List<T> findAll(){return new ArrayList<>(data.values());}
-    public void delete(int id){data.remove(id);}
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.Map;
+
+public class RepositoryImpl<K, V> implements Repository<K, V> {
+    private Map<K, V> map = new HashMap<>();
+
+    @Override
+    public void add(K key, V value) {
+        map.put(key, value);
+    }
+
+    @Override
+    public V get(K key) {
+        return map.get(key);
+    }
+
+    @Override
+    public void remove(K key) {
+        map.remove(key);
+    }
+
+    @Override
+    public Collection<V> getAllValues() {
+        return map.values();
+    }
 }

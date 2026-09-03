@@ -1,42 +1,45 @@
 package school.model;
+import java.time.LocalDate; 
+import java.util.HashMap; 
+import java.util.Map;
 
-import java.io.Serializable;
-
-public class Student implements Serializable {
-    private static final long serialVersionUID = 1L;
-
-    private int id;
-    private String name;
-    private int age;
-    private Gender gender;
-    private double fee;
-    private StudentLevel level;
-    private double score; 
-
-    public Student(int id, String name, int age, Gender gender, double fee, StudentLevel level) {
-        this.id = id;
-        this.name = name;
-        this.age = age;
-        this.gender = gender;
-        this.fee = fee;
-        this.level = level;
-        this.score = 0.0;
+public class Student extends Person {
+    private double gpa; 
+    private StudentLevel level; 
+    private Department department;
+    private Map<Course, Double> grades = new HashMap<>(); 
+    
+    public Student(int id, String fn, String ln, LocalDate dob, Gender g, String addr, String phone, String email, double gpa, StudentLevel level, Department dept) {
+        super(id, fn, ln, dob, g, addr, phone, email);
+        this.gpa = gpa; 
+        this.level = level; 
+        this.department = dept; 
+        dept.addStudent(this);
     }
-
     
-    public int getId() { return id; }
-    public String getName() { return name; }
-    public int getAge() { return age; }
-    public Gender getGender() { return gender; }
-    public double getFee() { return fee; }
-    public StudentLevel getLevel() { return level; }
-    public double getScore() { return score; }
-
+    public double getGPA() { return gpa; } 
+    public StudentLevel getLevel() { return level; } 
+    public Department getDepartment() { return department; }
     
-	public void setScore(double score) { this.score = score; }
-
-    @Override
-    public String toString() {
-        return id + " | " + name + " | " + age + " | " + gender + " | " + level.getDescription() + " | Fee: " + fee;
+    public void addGrade(Course c, double score) { 
+        grades.put(c, score); 
+        calculateGPA(); 
+    }
+    
+    private void calculateGPA() { 
+        if(grades.isEmpty()) { 
+            this.gpa = 0; 
+            return; 
+        }
+        double total = grades.values().stream().mapToDouble(d->d).sum();
+        this.gpa = (total / grades.size()) / 25.0; 
+        if(this.gpa > 4.0) this.gpa = 4.0; 
+    }
+    
+    public Map<Course, Double> getGrades() { return grades; }
+    
+    @Override 
+    public String toString() { 
+        return "ID:" + getId() + " | " + getFullName() + " | " + level + " | " + department.getName() + " | GPA:" + String.format("%.2f", gpa); 
     }
 }

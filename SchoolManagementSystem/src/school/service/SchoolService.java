@@ -1,76 +1,109 @@
 package school.service;
-
-import school.interfaces.*;
 import school.model.*;
-import school.exception.DuplicateIDException;
+import school.exception.*;
+import school.interfaces.*;
+import school.util.LoggerUtil; 
+import java.time.LocalDate;
 import java.util.*;
+import java.util.logging.Level;
+import java.util.stream.Collectors;
 
-public class SchoolService implements CRUDOperations, ReportOperations {
-    
-    private List<Student> students;
-    private DataManager fileManager = new FileDataManager();
-    private DataManager dbManager = new DBDataManager();
+public class SchoolService {
+    private Repository<Integer, Student> studentRepo;
+    private Repository<Integer, Teacher> teacherRepo;
+    private DataManager fileManager;
+    private DBDataManager db; 
+    private Set<Course> allCourses = new HashSet<>();
+    private Queue<String> adminQueue = new LinkedList<>();
+    private Stack<String> history = new Stack<>();
 
     public SchoolService() {
-        students = fileManager.loadFromFile();
+        this.studentRepo = new RepositoryImpl<>();
+        this.teacherRepo = new RepositoryImpl<>();
+        this.fileManager = new FileDataManager();
+        this.db = new DBDataManager(); 
+        loadAllFromDB();
     }
 
-    @Override
-    public void registerStudent(Student s) throws DuplicateIDException {
-        for(Student st : students) {
-            if(st.getId() == s.getId()) {
-                throw new DuplicateIDException("ID already exists: " + s.getId());
-            }
-        }
-        students.add(s);
-        System.out.println("Student registered successfully!");
+    public void registerStudent(Student s) throws DuplicateIDException, InvalidDataException {
+        if (s.getGPA() < 0 || s.getGPA() > 4.0) throw new InvalidDataException("GPA must be 0-4.0");
+        studentRepo.add(s.getId(), s);
+        if(s.getDepartment() != null) s.getDepartment().addStudent(s);
+        history.push("Added Student: " + s.getFullName());
     }
-
-    public void registerStudent(int id, String name, int age, Gender gender, double fee) throws DuplicateIDException {
-        Student s = new Student(id, name, age, gender, fee, StudentLevel.LEVEL_100); // default level
+    
+    public void registerStudent(String firstName, String lastName, LocalDate dob, Gender gender, 
+                                String address, String phone, String email, double gpa, StudentLevel level, Department department) 
+                                throws DuplicateIDException, InvalidDataException {
+        int id = new Random().nextInt(9000) + 1000;
+        Student s = new Student(id, firstName, lastName, dob, gender, address, phone, email, gpa, level, department);
         registerStudent(s);
     }
 
-    @Override
-    public Student searchStudent(int id) {
-        for(Student s : students) {
-            if(s.getId() == id) return s;
-        }
-        return null;
+    public void registerTeacher(Teacher t) throws DuplicateIDException {
+        teacherRepo.add(t.getId(), t);
+        history.push("Added Teacher: " + t.getFullName());
     }
 
-    @Override
-    public void viewAll() {
-        if(students.isEmpty()) {
-            System.out.println("No students found");
-            return;
-        }
-        for(Student s : students) {
-            System.out.println(s);
-        }
+    public List<Student> getStudentsByDepartment(String deptName) { 
+        return studentRepo.getAllValues().stream() 
+                .filter(s -> s.getDepartment() != null && s.getDepartment().getName().equalsIgnoreCase(deptName))
+                .sorted(Comparator.comparing(Student::getFullName))
+                .collect(Collectors.toList());
+    }
+    
+    public double getAverageGPA() {
+        return studentRepo.getAllValues().stream() 
+                .mapToDouble(Student::getGPA)
+                .average().orElse(0.0);
+    }
+    
+    public double calculateAverageGPA() { return getAverageGPA(); }
+    
+    public List<Student> getTopStudents(int topN) {
+        return studentRepo.getAllValues().stream() 
+                .sorted(Comparator.comparingDouble(Student::getGPA).reversed())
+                .limit(topN)
+                .collect(Collectors.toList());
     }
 
-    @Override
-    public double averageFee() {
-        if(students.isEmpty()) return 0;
-        double sum = 0;
-        for(Student s : students) sum += s.getFee();
-        return sum / students.size();
+    public Student findStudent(int id) throws StudentNotFoundException {
+        Student s = studentRepo.get(id);
+        if (s == null) throw new StudentNotFoundException("Student with ID " + id + " not found");
+        return s;
+    }
+    
+    public void enrollStudentInCourse(int studentId, Course course) throws StudentNotFoundException {
+        Student s = findStudent(studentId);
+        s.enrollCourse(course);
+        allCourses.add(course);
     }
 
-    @Override
-    public void sortByName() {
-        students.sort(Comparator.comparing(Student::getName));
-        System.out.println("Sorted by Name");
+    public void saveAllToFile() {
+        fileManager.saveAllStudents(studentRepo.getAllValues()); 
+        fileManager.saveAllTeachers(teacherRepo.getAllValues());
+    }
+    
+    public void saveToFile() { saveAllToFile(); }
+    
+    public void loadAllFromFile() {
+        Collection<Student> students = fileManager.getAllStudents();
+        if(students != null) students.forEach(s -> { try { studentRepo.add(s.getId(), s); } catch(Exception e){} });
     }
 
-    public void saveToFile() {
-        fileManager.saveToFile(students);
-        System.out.println("Saved to students.dat");
+    public void saveAllToDB() { 
+        db.saveAllStudents(studentRepo.getAllValues());
+        db.saveAllTeachers(teacherRepo.getAllValues());
+    }
+    
+    public void loadAllFromDB() {
+        db.getAllStudents().forEach(s -> { try { studentRepo.add(s.getId(), s); } catch(Exception e){} });
+        db.getAllTeachers().forEach(t -> { try { teacherRepo.add(t.getId(), t); } catch(Exception e){} });
     }
 
-    public void saveToDB() {
-        dbManager.saveToFile(students);
-        System.out.println("Saved to Database");
-    }
+    public void addAdminTask(String task) { adminQueue.add(task); }
+    public String processAdminTask() { return adminQueue.poll(); }
+    public String undoLastAction() { return history.isEmpty() ? "Nothing to undo" : history.pop(); }
+    public Collection<Student> getAllStudents() { return studentRepo.getAllValues(); } 
+    public Collection<Teacher> getAllTeachers() { return teacherRepo.getAllValues(); } 
 }
